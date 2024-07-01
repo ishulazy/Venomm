@@ -1,3 +1,3 @@
 apt install python3-pip -y
-pip install telebot --break-system-packages
+pip install telebot 
 chmod +x *
