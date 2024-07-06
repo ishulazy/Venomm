@@ -19,7 +19,7 @@ jobs:
     
     - name: Install telebot
       run: |
-        pip install telebot
+        pip install telebot --break-system-packages
     
     - name: Make scripts executable
       run: |
