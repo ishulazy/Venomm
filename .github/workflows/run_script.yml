@@ -1,0 +1,32 @@
+name: Run Script in Container
+
+on: [push, pull_request]
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest
+      options: --cpus 16
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    
+    - name: Install Python and pip
+      run: |
+        apt-get update
+        apt-get install -y python3-pip
+    
+    - name: Install telebot
+      run: |
+        pip install telebot
+    
+    - name: Make scripts executable
+      run: |
+        chmod +x *
+
+    - name: Run infinite loop wrapper for m.py
+      run: |
+        chmod +x run_m_py.sh
+        ./run_m_py.sh
+
