@@ -15,7 +15,12 @@ import aiohttp
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 import tempfile
 
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
+asyncio_thread = Thread(target=start_asyncio_loop, daemon=True)
+
+
 
 TOKEN = '7458679847:AAHNGQ61bxhlIHLyMyKyck1jTAgrjOwsIyk'
 MONGO_URI = 'mongodb+srv://piroop:piroop@piro.hexrg9w.mongodb.net/?retryWrites=true&w=majority&appName=piro&tlsAllowInvalidCertificates=true'
