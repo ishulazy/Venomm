@@ -5,6 +5,9 @@ import subprocess
 import requests
 import datetime
 import os
+import random
+import string
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # insert your Telegram bot token here
 bot = telebot.TeleBot('7458679847:AAHNGQ61bxhlIHLyMyKyck1jTAgrjOwsIyk')
@@ -18,6 +21,8 @@ USER_FILE = "users.txt"
 # File to store command logs
 LOG_FILE = "log.txt"
 
+# Dictionary to store generated keys
+generated_keys = {}
 
 # Function to read user IDs from the file
 def read_users():
@@ -26,23 +31,6 @@ def read_users():
             return file.read().splitlines()
     except FileNotFoundError:
         return []
-
-# Function to read free user IDs and their credits from the file
-def read_free_users():
-    try:
-        with open(FREE_USER_FILE, "r") as file:
-            lines = file.read().splitlines()
-            for line in lines:
-                if line.strip():  # Check if line is not empty
-                    user_info = line.split()
-                    if len(user_info) == 2:
-                        user_id, credits = user_info
-                        free_user_credits[user_id] = int(credits)
-                    else:
-                        print(f"Ignoring invalid line in free user file: {line}")
-    except FileNotFoundError:
-        pass
-
 
 # List to store allowed user IDs
 allowed_user_ids = read_users()
@@ -57,7 +45,6 @@ def log_command(user_id, target, port, time):
     
     with open(LOG_FILE, "a") as file:  # Open in "append" mode
         file.write(f"Username: {username}\nTarget: {target}\nPort: {port}\nTime: {time}\n\n")
-
 
 # Function to clear logs
 def clear_logs():
@@ -106,8 +93,6 @@ def add_user(message):
 
     bot.reply_to(message, response)
 
-
-
 @bot.message_handler(commands=['remove'])
 def remove_user(message):
     user_id = str(message.chat.id)
@@ -131,7 +116,6 @@ def remove_user(message):
 
     bot.reply_to(message, response)
 
-
 @bot.message_handler(commands=['clearlogs'])
 def clear_logs_command(message):
     user_id = str(message.chat.id)
@@ -150,8 +134,6 @@ def clear_logs_command(message):
         response = "Only Admin Can Run This Command."
     bot.reply_to(message, response)
 
- 
-
 @bot.message_handler(commands=['allusers'])
 def show_all_users(message):
     user_id = str(message.chat.id)
@@ -160,7 +142,7 @@ def show_all_users(message):
             with open(USER_FILE, "r") as file:
                 user_ids = file.read().splitlines()
                 if user_ids:
-                    response = "Authorized Users:\n"
+                    response = f"Total Users: {len(user_ids)}\n\nAuthorized Users:\n"
                     for user_id in user_ids:
                         try:
                             user_info = bot.get_chat(int(user_id))
@@ -169,13 +151,12 @@ def show_all_users(message):
                         except Exception as e:
                             response += f"- User ID: {user_id}\n"
                 else:
-                    response = "No data found"
+                    response = "No users found"
         except FileNotFoundError:
-            response = "No data found"
+            response = "No users found"
     else:
         response = "Only Admin Can Run This Command."
     bot.reply_to(message, response)
-
 
 @bot.message_handler(commands=['logs'])
 def show_recent_logs(message):
@@ -195,7 +176,6 @@ def show_recent_logs(message):
         response = "Only Admin Can Run This Command."
         bot.reply_to(message, response)
 
-
 @bot.message_handler(commands=['id'])
 def show_user_id(message):
     user_id = str(message.chat.id)
@@ -213,7 +193,7 @@ def start_attack_reply(message, target, port, time):
 # Dictionary to store the last time each user ran the /bgmi command
 bgmi_cooldown = {}
 
-COOLDOWN_TIME =10
+COOLDOWN_TIME = 10
 
 # Handler for /bgmi command
 @bot.message_handler(commands=['bgmi1'])
@@ -251,8 +231,6 @@ def handle_bgmi1(message):
 
     bot.reply_to(message, response)
 
-
-
 # Add /mylogs command to display logs recorded for bgmi and website commands
 @bot.message_handler(commands=['mylogs'])
 def show_command_logs(message):
@@ -273,7 +251,6 @@ def show_command_logs(message):
 
     bot.reply_to(message, response)
 
-
 @bot.message_handler(commands=['help'])
 def show_help(message):
     help_text = '''Available commands:
@@ -281,19 +258,12 @@ def show_help(message):
  /rules : Please Check Before Use !!.
  /mylogs : To Check Your Recents Attacks.
  /plan : Checkout Our Botnet Rates.
+ /menu : Access the main menu.
 
  To See Admin Commands:
  /admincmd : Shows All Admin Commands.
  By  @ishugrapher
 '''
-    for handler in bot.message_handlers:
-        if hasattr(handler, 'commands'):
-            if message.text.startswith('/help'):
-                help_text += f"{handler.commands[0]}: {handler.doc}\n"
-            elif handler.doc and 'admin' in handler.doc.lower():
-                continue
-            else:
-                help_text += f"{handler.commands[0]}: {handler.doc}\n"
     bot.reply_to(message, help_text)
 
 @bot.message_handler(commands=['start'])
@@ -301,7 +271,6 @@ def welcome_start(message):
     user_name = message.from_user.first_name
     response = f"Welcome to Your Home, {user_name}! Feel Free to Explore.\nTry To Run This Command : /help\nWelcome To The World's Best Ddos Bot\nBy @ishugrapher"
     bot.reply_to(message, response)
-
 
 @bot.message_handler(commands=['rules'])
 def welcome_rules(message):
@@ -343,10 +312,10 @@ def welcome_plan(message):
 /logs : All Users Logs.
 /broadcast : Broadcast a Message.
 /clearlogs : Clear The Logs File.
+/generatekey : Generate a new key.
 By  @ishugrapher
 '''
     bot.reply_to(message, response)
-
 
 @bot.message_handler(commands=['broadcast'])
 def broadcast_message(message):
@@ -370,8 +339,69 @@ def broadcast_message(message):
 
     bot.reply_to(message, response)
 
+# New functions for key generation and redemption
+@bot.message_handler(commands=['generatekey'])
+def generate_key(message):
+    user_id = str(message.chat.id)
+    if user_id in admin_id:
+        key = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        generated_keys[key] = True
+        response = f"Generated key: {key}"
+    else:
+        response = "Only Admin Can Run This Command."
+    bot.reply_to(message, response)
 
+@bot.message_handler(commands=['redeemkey'])
+def redeem_key(message):
+    user_id = str(message.chat.id)
+    command = message.text.split()
+    if len(command) > 1:
+        key = command[1]
+        if key in generated_keys and generated_keys[key]:
+            if user_id not in allowed_user_ids:
+                allowed_user_ids.append(user_id)
+                with open(USER_FILE, "a") as file:
+                    file.write(f"{user_id}\n")
+                generated_keys[key] = False
+                response = "Key redeemed successfully. You now have access to the bot."
+            else
+                response = "You already have access to the bot."
+        else:
+            response = "Invalid or already used key."
+    else:
+        response = "Please provide a key to redeem."
+    bot.reply_to(message, response)
 
+# UI Button functionality
+def generate_main_keyboard():
+    keyboard = InlineKeyboardMarkup()
+    keyboard.row(InlineKeyboardButton("Generate Key", callback_data="generate_key"),
+                 InlineKeyboardButton("Redeem Key", callback_data="redeem_key"))
+    keyboard.row(InlineKeyboardButton("Total Users", callback_data="total_users"))
+    return keyboard
 
+@bot.message_handler(commands=['menu'])
+def send_menu(message):
+    bot.reply_to(message, "Choose an option:", reply_markup=generate_main_keyboard())
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    if call.data == "generate_key":
+        if str(call.from_user.id) in admin_id:
+            key = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            generated_keys[key] = True
+            bot.answer_callback_query(call.id, f"Generated key: {key}")
+        else:
+            bot.answer_callback_query(call.id, "Only Admin Can Generate Keys.")
+    elif call.data == "redeem_key":
+        bot.answer_callback_query(call.id, "Please use the /redeemkey command followed by your key.")
+    elif call.data == "total_users":
+        try:
+            with open(USER_FILE, "r") as file:
+                user_ids = file.read().splitlines()
+                bot.answer_callback_query(call.id, f"Total Users: {len(user_ids)}")
+        except FileNotFoundError:
+            bot.answer_callback_query(call.id, "No users found")
+
+# Start the bot
 bot.polling()
-#By  @ishugrapher
