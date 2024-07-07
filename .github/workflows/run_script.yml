@@ -19,8 +19,18 @@ jobs:
     
     - name: Install telebot
       run: |
-        pip install telebot --break-system-packages
-    
+        pip install pyTelegramBotAPI pymongo certifi requests aiohttp telebot --break-system-packages
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y proxychains
+        # You might need to add custom installation steps for bgmi here
+
+    - name: Set up MongoDB
+      uses: supercharge/mongodb-github-action@1.8.0
+      with:
+        mongodb-version: '5.0'
     - name: Make scripts executable
       run: |
         chmod +x *
