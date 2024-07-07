@@ -23,8 +23,8 @@ jobs:
 
     - name: Install system dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y proxychains
+        apt-get update
+        apt-get install -y proxychains
         # You might need to add custom installation steps for bgmi here
 
     - name: Set up MongoDB
