@@ -364,7 +364,7 @@ def redeem_key(message):
                     file.write(f"{user_id}\n")
                 generated_keys[key] = False
                 response = "Key redeemed successfully. You now have access to the bot."
-            else
+            else:
                 response = "You already have access to the bot."
         else:
             response = "Invalid or already used key."
