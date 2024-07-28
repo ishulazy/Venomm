@@ -21,7 +21,7 @@ jobs:
 
     - name: Install telebot
       run: |
-        pip install pyTelegramBotAPI pymongo certifi requests aiohttp telebot --break-system-packages
+        pip install python-telegram-bot python-dotenv pyTelegramBotAPI pymongo certifi requests aiohttp telebot --break-system-packages
 
     - name: Install system dependencies
       run: |
