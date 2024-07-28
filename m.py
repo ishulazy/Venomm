@@ -1,17 +1,14 @@
 import os
-import telebot
-import json
-import requests
-import logging
-import time
-from pymongo import MongoClient
-from datetime import datetime, timedelta
-import certifi
-import random
 import asyncio
-import aiohttp
+import logging
+from datetime import datetime, timedelta
+
+import certifi
+from pymongo import MongoClient
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
+from telebot.asyncio_handler_backends import State, StatesGroup
+from telebot.asyncio_storage import StateMemoryStorage
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -33,12 +30,16 @@ client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
 db = client['soul']
 users_collection = db.users
 
-# Bot setup
-bot = AsyncTeleBot(TOKEN)
-
 # Constants
 REQUEST_INTERVAL = 1
 BLOCKED_PORTS = [8700, 20000, 443, 17500, 9031, 20002, 20001]
+
+# Bot setup
+state_storage = StateMemoryStorage()
+bot = AsyncTeleBot(TOKEN, state_storage=state_storage)
+
+class AttackStates(StatesGroup):
+    waiting_for_details = State()
 
 async def is_user_admin(user_id, chat_id):
     try:
@@ -119,25 +120,29 @@ async def attack_command(message):
             return
 
         await bot.send_message(chat_id, "*Enter the target IP, port, and duration (in seconds) separated by spaces.*", parse_mode='Markdown')
-        bot.register_next_step_handler(message, process_attack_command)
+        await bot.set_state(message.from_user.id, AttackStates.waiting_for_details, message.chat.id)
     except Exception as e:
         logger.error(f"Error in attack command: {e}")
         await bot.send_message(chat_id, "*An error occurred. Please try again later.*", parse_mode='Markdown')
 
+@bot.message_handler(state=AttackStates.waiting_for_details)
 async def process_attack_command(message):
     try:
         args = message.text.split()
         if len(args) != 3:
-            await bot.send_message(message.chat.id, "*Invalid command format. Please use: /attack target_ip target_port time*", parse_mode='Markdown')
+            await bot.send_message(message.chat.id, "*Invalid command format. Please use: target_ip target_port time*", parse_mode='Markdown')
+            await bot.delete_state(message.from_user.id, message.chat.id)
             return
         target_ip, target_port, duration = args[0], int(args[1]), int(args[2])
 
         if target_port in BLOCKED_PORTS:
             await bot.send_message(message.chat.id, f"*Port {target_port} is blocked. Please use a different port.*", parse_mode='Markdown')
+            await bot.delete_state(message.from_user.id, message.chat.id)
             return
 
         if duration > 3600:  # Example: limit attack duration to 1 hour
             await bot.send_message(message.chat.id, "*Attack duration is too long. Please use a shorter duration.*", parse_mode='Markdown')
+            await bot.delete_state(message.from_user.id, message.chat.id)
             return
 
         # Here you would implement the actual attack logic
@@ -148,6 +153,8 @@ async def process_attack_command(message):
     except Exception as e:
         logger.error(f"Error in processing attack command: {e}")
         await bot.send_message(message.chat.id, "*An error occurred while processing your request.*", parse_mode='Markdown')
+    finally:
+        await bot.delete_state(message.from_user.id, message.chat.id)
 
 @bot.message_handler(commands=['start'])
 async def send_welcome(message):
