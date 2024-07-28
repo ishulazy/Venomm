@@ -1,6 +1,8 @@
 name: Run Script in Container
-
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   run-script:
@@ -16,7 +18,7 @@ jobs:
       run: |
         apt-get update
         apt-get install -y python3-pip
-    
+
     - name: Install telebot
       run: |
         pip install pyTelegramBotAPI pymongo certifi requests aiohttp telebot --break-system-packages
@@ -31,12 +33,32 @@ jobs:
       uses: supercharge/mongodb-github-action@1.8.0
       with:
         mongodb-version: '5.0'
+
+    - name: Install required packages
+      run: |
+        pip install telebot requests --break-system-packages
+    
     - name: Make scripts executable
       run: |
         chmod +x *
-
-    - name: Run infinite loop wrapper for m.py
+    
+    - name: Run script with auto-restart
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        chmod +x run_m_py.sh
-        ./run_m_py.sh
-
+        while true; do
+          start_time=$(date +%s)
+          timeout 21000s ./run_m_py.sh  # Run for 5 hours 50 minutes
+          end_time=$(date +%s)
+          run_time=$((end_time - start_time))
+          
+          if [ $run_time -lt 21000 ]; then
+            echo "Script completed before timeout. Exiting."
+            break
+          else
+            echo "Restarting workflow..."
+            curl -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/actions/workflows/${{ github.workflow }}/dispatches -d '{"ref":"${{ github.ref }}"}'
+            sleep 60  # Wait for 1 minute before exiting
+            break
+          fi
+        done
